@@ -4,9 +4,9 @@ Double-entry ledger library for Go, with multi-currency and FX support, append-o
 
 - Module: `github.com/izzyblues/ledgo` (public on GitHub). Licence: Apache-2.0.
 - Status: core types, validation and conformance suite (`ledgotest`, a testify suite) done. PostgreSQL backend in progress (`postgres/`, uses a `replace` to `../` until ledgo is tagged).
-- Tests: testify. Postgres runs in Docker: `docker compose up -d`, then `go test ./...` in `postgres/` (override with `LEDGO_POSTGRES_DSN`).
+- Tests: testify. Postgres runs in Docker: `docker compose up -d`, then `go test ./...` in `postgres/`.
 - One entity per file, each with its own sentinel errors.
-- `make` lints and tests every module (`make lint`, `make test`, `make fmt`, `make db-up`/`db-down`). golangci-lint v2, config in `.golangci.yml`. Add each new backend module to `MODULES` in the Makefile.
+- `make` lints and tests every module (`make lint`, `make test`, `make fmt`, `make db-up`). golangci-lint v2, config in `.golangci.yml`. Add each new backend module to `MODULES` in the Makefile.
 
 ## Backends
 

@@ -3,7 +3,6 @@ package postgres_test
 import (
 	"context"
 	"database/sql"
-	"os"
 	"testing"
 
 	"github.com/izzyblues/ledgo/ledgotest"
@@ -12,14 +11,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// defaultDSN points at the database started by `docker compose up -d`.
-const defaultDSN = "postgres://ledgo:ledgo@localhost:5432/ledgo?sslmode=disable" //nolint:gosec // local Docker credentials
+// dsn points at the database started by `docker compose up -d`.
+const dsn = "postgres://ledgo:ledgo@localhost:5432/ledgo?sslmode=disable" //nolint:gosec // local Docker credentials
 
 func TestConformance(t *testing.T) {
-	dsn := os.Getenv("LEDGO_POSTGRES_DSN")
-	if dsn == "" {
-		dsn = defaultDSN
-	}
 	db, err := sql.Open("pgx", dsn)
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })

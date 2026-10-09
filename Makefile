@@ -1,6 +1,6 @@
 MODULES := . postgres
 
-.PHONY: all lint fmt test db-up db-down
+.PHONY: all lint fmt test db-up
 
 all: lint test
 
@@ -15,6 +15,3 @@ test: db-up
 
 db-up:
 	@docker compose up -d --wait
-
-db-down:
-	@docker compose down
