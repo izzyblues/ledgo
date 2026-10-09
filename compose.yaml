@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ledgo
+      POSTGRES_PASSWORD: ledgo
+      POSTGRES_DB: ledgo
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ledgo"]
+      interval: 1s
+      retries: 30

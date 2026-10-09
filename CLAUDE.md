@@ -3,7 +3,10 @@
 Double-entry ledger library for Go, with multi-currency and FX support, append-only storage and pluggable storage backends.
 
 - Module: `github.com/izzyblues/ledgo` (public on GitHub). Licence: Apache-2.0.
-- Status: nothing implemented yet.
+- Status: core types, validation and conformance suite (`ledgotest`, a testify suite) done. PostgreSQL backend in progress (`postgres/`, uses a `replace` to `../` until ledgo is tagged).
+- Tests: testify. Postgres runs in Docker: `docker compose up -d`, then `go test ./...` in `postgres/` (override with `LEDGO_POSTGRES_DSN`).
+- One entity per file, each with its own sentinel errors.
+- `make` lints and tests every module (`make lint`, `make test`, `make fmt`, `make db-up`/`db-down`). golangci-lint v2, config in `.golangci.yml`. Add each new backend module to `MODULES` in the Makefile.
 
 ## Backends
 
@@ -50,12 +53,16 @@ FX revaluation (unrealized gains/losses), reporting/base-currency balances, rate
 
 ## Open questions
 
-- Balances: compute from entries, keep a cached balance, or both? Point-in-time balance queries?
-- Hot accounts (fee/omnibus accounts touched by every posting): locking strategy.
-- Entry representation: signed amounts vs separate debit/credit fields.
-- Rounding mode: `RoundBank` (half-even) vs `Round` (half away from zero).
+- Point-in-time balance queries?
+- Hot accounts (fee/omnibus accounts touched by every posting): locking strategy, once cached balances or overdraft checks exist.
 
 ## Decisions
+
+- **Balances are `SUM()` over entries**, no cached balance. Commits only insert rows, so they take no locks beyond their own idempotency key and cannot deadlock on READ COMMITTED. No retry loop in Postgres for now; add it when a backend needs one (CockroachDB) or when cached balances bring row locks.
+- **Signed amounts**: positive = debit, negative = credit. A transaction balances when each currency sums to zero.
+- **Rounding is `RoundBank` (half-even)**, in `Rate.Convert`.
+- **Idempotency uses a SHA-256 fingerprint** of the content (excluding the key), stored next to the unique key.
+- **Start with the simplest implementation**: no append-only triggers or batching yet.
 
 - **`shopspring/decimal` over the alternatives.** `int64` minor units overflow at 18 decimal places (crypto). `govalues/decimal` is limited to 19 digits, which has the same problem. `cockroachdb/apd` is faster and has no global state, but its API is clunkier. `shopspring/decimal` is the most widely used, and has built-in `sql.Scanner`/`driver.Valuer` and JSON support.
 - **CockroachDB is built before Cassandra.** CockroachDB uses the Postgres wire protocol, so it mostly reuses the Postgres code and only needs a serialization-retry loop. Cassandra has no cross-partition transactions, so it needs a separate design with weaker guarantees. Build the cheap backend first, and the hard one last.
