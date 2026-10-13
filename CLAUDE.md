@@ -35,7 +35,7 @@ Chosen over `int64` minor units because `int64` can't hold real amounts at 18 de
 - **Never use floats**, anywhere: not in the API, not in conversions.
 - **Never call `Div` in money paths.** `decimal.DivisionPrecision` is a package-wide setting that anyone can change. For FX, multiply by the rate, then round straight away to the target currency's decimal places.
 - **Compare with `Equal`/`Cmp`, never `==`.** The struct holds a `*big.Int` pointer.
-- **Validate decimal places on input.** Keep a per-currency exponent table (JPY 0, USD 2, BHD 3, crypto up to 18) and reject amounts with more decimal places than their currency allows (e.g. `1.005 USD`).
+- **Validate decimal places on input.** Reject amounts with more decimal places than their currency allows (e.g. `1.005 USD`). Decimal places come from currencies registered with `ledgo.RegisterCurrency` (e.g. crypto, up to 18 places; safe for concurrent use), then from `Rhymond/go-money`'s ISO 4217 table, matched on the exact uppercase code. **go-money is an implementation detail**: never expose it in the API or ask users to import it, and never write to its global table. `TestISOCurrencies` pins a few entries so a go-money upgrade can't silently change validation.
 - **`shopspring/decimal` is part of the public API.** Changing it later is a breaking change.
 
 ## Accounting rules (non-negotiable)

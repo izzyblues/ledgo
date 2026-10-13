@@ -29,4 +29,5 @@ func TestAccountValidate(t *testing.T) {
 	assert.NoError(t, Account{ID: "a", Currency: "USD"}.validate())
 	assert.ErrorIs(t, Account{Currency: "USD"}.validate(), ErrNoAccount)
 	assert.ErrorIs(t, Account{ID: "a", Currency: "XXX"}.validate(), ErrUnknownCurrency)
+	assert.ErrorIs(t, Account{ID: "a", Currency: "usd"}.validate(), ErrUnknownCurrency)
 }

@@ -33,10 +33,11 @@ type Suite struct {
 	prefix string
 }
 
-// SetupSuite wraps Store in a Ledger. Embedding suites that override it must
-// call it.
+// SetupSuite wraps Store in a Ledger and registers BTC, which ISO 4217
+// lacks. Embedding suites that override it must call it.
 func (s *Suite) SetupSuite() {
 	s.Require().NotNil(s.Store, "ledgotest.Suite needs a Store")
+	ledgo.RegisterCurrency("BTC", 8)
 	s.ledger = ledgo.New(s.Store)
 	s.prefix = fmt.Sprint(time.Now().UnixNano())
 }

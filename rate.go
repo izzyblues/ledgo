@@ -25,7 +25,7 @@ type Rate struct {
 // Convert multiplies amount by the rate and rounds half-even (RoundBank) to
 // the target currency's decimal places. It never divides.
 func (r Rate) Convert(amount decimal.Decimal) (decimal.Decimal, error) {
-	places, ok := Currencies[r.To]
+	places, ok := decimalPlaces(r.To)
 	if !ok {
 		return decimal.Decimal{}, fmt.Errorf("%w: %q", ErrUnknownCurrency, r.To)
 	}
@@ -36,8 +36,8 @@ func (r *Rate) validate() error {
 	if r == nil {
 		return nil
 	}
-	_, fromKnown := Currencies[r.From]
-	_, toKnown := Currencies[r.To]
+	_, fromKnown := decimalPlaces(r.From)
+	_, toKnown := decimalPlaces(r.To)
 	if !fromKnown || !toKnown || r.From == r.To {
 		return fmt.Errorf("%w: %q to %q", ErrInvalidRate, r.From, r.To)
 	}

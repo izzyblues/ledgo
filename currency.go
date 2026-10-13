@@ -3,31 +3,50 @@ package ledgo
 import (
 	"errors"
 	"fmt"
+	"sync"
 
+	"github.com/Rhymond/go-money"
 	"github.com/shopspring/decimal"
 )
 
-// Errors returned for amounts that don't fit the Currencies table.
+// Errors returned for amounts that don't fit their currency.
 var (
 	ErrUnknownCurrency = errors.New("ledgo: unknown currency")
 	ErrTooManyDecimals = errors.New("ledgo: amount has more decimal places than its currency allows")
 )
 
-// Currencies maps currency codes to their number of decimal places.
-// Add entries to support more currencies.
-//
-// ponytail: a plain package-level map; make it per-Ledger if two ledgers ever need different tables.
-var Currencies = map[string]int32{
-	"USD": 2, "EUR": 2, "GBP": 2, "CHF": 2, "CAD": 2, "AUD": 2, "NZD": 2,
-	"SGD": 2, "HKD": 2, "CNY": 2, "INR": 2, "MXN": 2, "BRL": 2, "ZAR": 2,
-	"SEK": 2, "NOK": 2, "DKK": 2, "PLN": 2, "PHP": 2, "THB": 2, "IDR": 2,
-	"JPY": 0, "KRW": 0, "VND": 0, "CLP": 0, "ISK": 0,
-	"BHD": 3, "KWD": 3, "OMR": 3, "JOD": 3, "TND": 3,
-	"BTC": 8, "USDC": 6, "USDT": 6, "ETH": 18,
+var registered = struct {
+	sync.RWMutex
+	places map[string]int32
+}{places: map[string]int32{}}
+
+// RegisterCurrency adds a currency that the ISO 4217 table doesn't know, such
+// as crypto, or overrides one. Codes are case-sensitive. It is safe for
+// concurrent use.
+func RegisterCurrency(code string, decimalPlaces int32) {
+	registered.Lock()
+	defer registered.Unlock()
+	registered.places[code] = decimalPlaces
+}
+
+// decimalPlaces looks currency up in the registered currencies, then in
+// go-money's ISO 4217 table, matching the exact uppercase code.
+func decimalPlaces(currency string) (int32, bool) {
+	registered.RLock()
+	places, ok := registered.places[currency]
+	registered.RUnlock()
+	if ok {
+		return places, true
+	}
+	c := money.GetCurrency(currency)
+	if c == nil || c.Code != currency {
+		return 0, false
+	}
+	return int32(c.Fraction), true //nolint:gosec // ISO 4217 fractions are at most 4
 }
 
 func checkDecimalPlaces(amount decimal.Decimal, currency string) error {
-	places, ok := Currencies[currency]
+	places, ok := decimalPlaces(currency)
 	if !ok {
 		return fmt.Errorf("%w: %q", ErrUnknownCurrency, currency)
 	}

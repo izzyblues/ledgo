@@ -62,7 +62,7 @@ func (a Account) validate() error {
 	if a.ID == "" {
 		return ErrNoAccount
 	}
-	if _, ok := Currencies[a.Currency]; !ok {
+	if _, ok := decimalPlaces(a.Currency); !ok {
 		return fmt.Errorf("%w: %q", ErrUnknownCurrency, a.Currency)
 	}
 	return nil
