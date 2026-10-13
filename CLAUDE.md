@@ -49,16 +49,19 @@ Chosen over `int64` minor units because `int64` can't hold real amounts at 18 de
 
 ## Out of scope for now
 
-FX revaluation (unrealized gains/losses), reporting/base-currency balances, rate fetching, accounting periods/closing. Pending holds (two-phase transfers), overdraft rules, account normal balances and multi-tenancy are still undecided.
+FX revaluation (unrealized gains/losses), reporting/base-currency balances, rate fetching, accounting periods/closing. Pending holds (two-phase transfers) and multi-tenancy are still undecided; holds can be modelled as a separate "held" account.
 
 ## Open questions
 
 - Point-in-time balance queries?
-- Hot accounts (fee/omnibus accounts touched by every posting): locking strategy, once cached balances or overdraft checks exist.
+- Balances of accounts without a limit are `SUM()`s over all their entries, which slows down as hot accounts grow. Snapshots when it matters.
 
 ## Decisions
 
-- **Balances are `SUM()` over entries**, no cached balance. Commits only insert rows, so they take no locks beyond their own idempotency key and cannot deadlock on READ COMMITTED. No retry loop in Postgres for now; add it when a backend needs one (CockroachDB) or when cached balances bring row locks.
+- **Accounts must be created before use**, hold one currency, and use TigerBeetle-style limits: `DebitsMustNotExceedCredits` / `CreditsMustNotExceedDebits`, failing with `ErrInsufficientFunds`. Balances are always raw debits minus credits; callers flip signs for credit-normal accounts (chosen over a "normal side" field to keep the library small).
+- **Only accounts with a limit keep a cached balance**, updated in the commit and locked in sorted ID order, so commits can't deadlock (the conformance suite checks this). Accounts without a limit (system accounts: clearing, FX, revenue) are insert-only, never locked, and their balance is `SUM()` over entries. This is the hot-account answer. Still no retry loop in Postgres; add it with CockroachDB.
+- **`postgres.InTx(*sql.Tx)`** writes into the caller's transaction, so postings commit atomically with business state.
+- **`Transaction.Reference`** links a transaction to what caused it (e.g. a payment ID). It is part of the fingerprint.
 - **Signed amounts**: positive = debit, negative = credit. A transaction balances when each currency sums to zero.
 - **Rounding is `RoundBank` (half-even)**, in `Rate.Convert`.
 - **Idempotency uses a SHA-256 fingerprint** of the content (excluding the key), stored next to the unique key.

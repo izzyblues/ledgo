@@ -19,7 +19,9 @@ var (
 // Transaction is a set of entries committed atomically.
 type Transaction struct {
 	IdempotencyKey string
-	Entries        []Entry
+	// Reference links the transaction to what caused it, such as a payment ID.
+	Reference string
+	Entries   []Entry
 	// Rate is the FX rate used, for transactions that convert currencies.
 	Rate *Rate
 }
@@ -66,7 +68,7 @@ func checkBalanced(entries []Entry) error {
 // Fingerprint is a hash of the transaction's content, excluding its
 // idempotency key. Stores use it to tell a retry from a conflicting reuse.
 func (tx Transaction) Fingerprint() []byte {
-	var content []byte
+	content := fmt.Appendf(nil, "reference %q\n", tx.Reference)
 	for _, e := range tx.Entries {
 		content = fmt.Appendf(content, "%q %q %s\n", e.Account, e.Currency, e.Amount)
 	}
