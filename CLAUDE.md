@@ -62,6 +62,7 @@ FX revaluation (unrealized gains/losses), reporting/base-currency balances, rate
 - **Only accounts with a limit keep a cached balance**, updated in the commit and locked in sorted ID order, so commits can't deadlock (the conformance suite checks this). Accounts without a limit (system accounts: clearing, FX, revenue) are insert-only, never locked, and their balance is `SUM()` over entries. This is the hot-account answer. Still no retry loop in Postgres; add it with CockroachDB.
 - **`postgres.InTx(*sql.Tx)`** writes into the caller's transaction, so postings commit atomically with business state.
 - **`Transaction.Reference`** links a transaction to what caused it (e.g. a payment ID). It is part of the fingerprint.
+- **`TransactionBuilder`** (`NewTransaction(key, ref).Debit(a, x).Credit(b, x).Build()`) is the recommended way to build transactions: entries take their currency from the `Account`, zero amounts are skipped, `Negated()` moves money back, and `Accounts()` lists accounts to create before committing. Builders are immutable values. Extracted from the payments spike, where every flow needed it. There is no `Transaction.Reversal(key)` yet: a true reversal of a stored transaction needs a way to load it.
 - **Signed amounts**: positive = debit, negative = credit. A transaction balances when each currency sums to zero.
 - **Rounding is `RoundBank` (half-even)**, in `Rate.Convert`.
 - **Idempotency uses a SHA-256 fingerprint** of the content (excluding the key), stored next to the unique key.
