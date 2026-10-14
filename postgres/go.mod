@@ -3,7 +3,7 @@ module github.com/izzyblues/ledgo/postgres
 go 1.25.0
 
 require (
-	github.com/izzyblues/ledgo v0.0.0
+	github.com/izzyblues/ledgo v0.0.1
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/shopspring/decimal v1.5.0
 	github.com/stretchr/testify v1.12.1
