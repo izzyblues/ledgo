@@ -20,10 +20,18 @@ var registered = struct {
 	places map[string]int32
 }{places: map[string]int32{}}
 
+// MaxDecimalPlaces is the most decimal places a currency can have: the stores'
+// amount columns keep 18, and some databases round extra places silently.
+const MaxDecimalPlaces = 18
+
 // RegisterCurrency adds a currency that the ISO 4217 table doesn't know, such
 // as crypto, or overrides one. Codes are case-sensitive. It is safe for
-// concurrent use.
+// concurrent use. It panics if decimalPlaces is not between 0 and
+// MaxDecimalPlaces.
 func RegisterCurrency(code string, decimalPlaces int32) {
+	if decimalPlaces < 0 || decimalPlaces > MaxDecimalPlaces {
+		panic(fmt.Sprintf("ledgo: %s cannot have %d decimal places, only 0 to %d", code, decimalPlaces, MaxDecimalPlaces))
+	}
 	registered.Lock()
 	defer registered.Unlock()
 	registered.places[code] = decimalPlaces

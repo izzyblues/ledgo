@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   module:
-    name: ${{ matrix.module }}
+    name: ${{ matrix.module == '.' && 'core' || matrix.module }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -25,6 +25,8 @@ jobs:
             postgres: postgres:17-alpine
           - module: oracle
             oracle: gvenzl/oracle-free:23-slim-faststart
+          - module: mysql
+            mysql: mysql:8.4
 
     services:
       postgres:
@@ -43,6 +45,15 @@ jobs:
           APP_USER_PASSWORD: ledgo
         ports: ["1521:1521"]
         options: --health-cmd healthcheck.sh --health-interval 2s --health-retries 90
+      mysql:
+        image: ${{ matrix.mysql }}
+        env:
+          MYSQL_ROOT_PASSWORD: ledgo
+          MYSQL_USER: ledgo
+          MYSQL_PASSWORD: ledgo
+          MYSQL_DATABASE: ledgo
+        ports: ["3306:3306"]
+        options: --health-cmd "mysqladmin ping -h 127.0.0.1 -uledgo -pledgo" --health-interval 1s --health-retries 60
 
     defaults:
       run:

@@ -1,4 +1,4 @@
-MODULES := . postgres oracle
+MODULES := . postgres oracle mysql
 
 .PHONY: all lint fmt test db-up
 
