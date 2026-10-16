@@ -31,3 +31,12 @@ func TestRegisterCurrency(t *testing.T) {
 	assert.NoError(t, checkDecimalPlaces(decimal.RequireFromString("0.000000000000000001"), "ETH"))
 	assert.ErrorIs(t, checkDecimalPlaces(decimal.RequireFromString("1.5"), "POINTS"), ErrTooManyDecimals)
 }
+
+// TestRegisterCurrencyRejectsPlacesStoresCannotKeep checks the 0 to 18 range,
+// since Oracle and MySQL would round extra places silently.
+func TestRegisterCurrencyRejectsPlacesStoresCannotKeep(t *testing.T) {
+	assert.Panics(t, func() { RegisterCurrency("TOKEN", MaxDecimalPlaces+1) })
+	assert.Panics(t, func() { RegisterCurrency("TOKEN", -1) })
+	_, ok := decimalPlaces("TOKEN")
+	assert.False(t, ok)
+}

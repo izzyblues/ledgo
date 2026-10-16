@@ -1,3 +1,5 @@
+-- Migrate splits this file on semicolons, so keep them out of comments.
+
 CREATE TABLE ledgo_accounts (
     id                             VARCHAR2(1000 CHAR) PRIMARY KEY,
     currency                       VARCHAR2(32 CHAR)        NOT NULL,

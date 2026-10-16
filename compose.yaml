@@ -23,3 +23,16 @@ services:
       test: ["CMD", "healthcheck.sh"]
       interval: 2s
       retries: 90
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ledgo
+      MYSQL_USER: ledgo
+      MYSQL_PASSWORD: ledgo
+      MYSQL_DATABASE: ledgo
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uledgo", "-pledgo"]
+      interval: 1s
+      retries: 60

@@ -4,8 +4,8 @@ Double-entry ledger library for Go, with multi-currency and FX support, append-o
 
 - Module: `github.com/izzyblues/ledgo` (public on GitHub). Licence: Apache-2.0.
 - Status: v0.0.1 (core types, `TransactionBuilder`, validation, conformance suite `ledgotest`, and the PostgreSQL and Oracle backends).
-- Releases: tag the core module `vX.Y.Z` first, then each backend (`postgres/vX.Y.Z`, `oracle/vX.Y.Z`). Each backend's `go.mod` requires the matching core version. Local development uses the root `go.work` (add each new backend module to it); consumers ignore it.
-- Tests: testify. Postgres and Oracle run in Docker: `docker compose up -d`, then `go test ./...` in the backend's directory.
+- Releases: tag the core module `vX.Y.Z` first, then each backend (`postgres/vX.Y.Z`, `oracle/vX.Y.Z`, `mysql/vX.Y.Z`). Each backend's `go.mod` requires the matching core version. Backends import `internal/sqlstore` from core, so a change there needs a core release before the backends: `go mod tidy` and `GOWORK=off` builds of a backend fail until core is tagged, then bump the backend's `require` and tidy. Local development uses the root `go.work` (add each new backend module to it); consumers ignore it.
+- Tests: testify. Postgres, Oracle and MySQL run in Docker: `docker compose up -d`, then `go test ./...` in the backend's directory.
 - One entity per file, each with its own sentinel errors.
 - `make` lints and tests every module (`make lint`, `make test`, `make fmt`, `make db-up`). golangci-lint v2, config in `.golangci.yml`. Add each new backend module to `MODULES` in the Makefile, to `go.work`, and to the matrix in `.github/workflows/ci.yml` (with its database as a service).
 
@@ -28,7 +28,7 @@ Implementation order follows **database popularity** (DB-Engines ranking). Postg
 |---|---|---|---|---|
 | 1 | PostgreSQL | `postgres` | `NUMERIC` | Done. Reference implementation. Also covers Aurora, AlloyDB, Neon and Supabase. |
 | 2 | Oracle | `oracle` | `NUMBER(38, 18)` | Done. `sijms/go-ora` (pure Go; avoid cgo `godror`). go-ora reads `NUMBER` as `float64`, so decimals cross the wire as text with an explicit `NLS_NUMERIC_CHARACTERS` (`TO_NUMBER`/`TO_CHAR`). Duplicates are caught as ORA-00001, which rolls back only the statement. `''` is `NULL`, booleans are `NUMBER(1)`, and DDL commits implicitly, so `Migrate` never runs `InTx`. |
-| 3 | MySQL | `mysql` | `DECIMAL(38, 18)` | InnoDB only. No `RETURNING`. Watch for gap-lock deadlocks under `FOR UPDATE`. |
+| 3 | MySQL | `mysql` | `DECIMAL(38, 18)` | Done. InnoDB, MySQL 8.0+. Every decimal parameter is `CAST(? AS DECIMAL(65, 30))`: with `interpolateParams=true`, `balance + '1.5'` runs in `DOUBLE` (the tests use that mode). Tables use `utf8mb4_0900_bin`, since the default collation is case-insensitive and `utf8mb4_bin` ignores trailing spaces. Keys are at most `VARCHAR(768)` (InnoDB index limit). Duplicates are caught as error 1062. `Commit` on `New` runs at READ COMMITTED; `InTx` callers should too. |
 | 4 | SQL Server | `sqlserver` | `DECIMAL(38, 18)` | `microsoft/go-mssqldb`. `OUTPUT` instead of `RETURNING`, `WITH (UPDLOCK, ROWLOCK)` instead of `FOR UPDATE`. Upsert with `MERGE` or catch duplicate key errors 2627/2601. |
 | 5 | MongoDB | `mongodb` | `Decimal128` | Not SQL: its own implementation behind the same storage interface. Joins the caller's transaction through the session carried in `ctx`. Needs a replica set, even single-node. Limits via a conditional `$inc` filtered on the balance. Write conflicts abort with `TransientTransactionError`; the caller's `WithTransaction` retries. |
 | 6 | IBM Db2 | `db2` | `DECIMAL(31, 18)` | `ibmdb/go_ibm_db` (cgo, needs clidriver). Max precision 31, so only 13 integer digits at 18 decimal places: document it. |
@@ -42,10 +42,9 @@ Implementation order follows **database popularity** (DB-Engines ranking). Postg
 ## Architecture
 
 - **Storage interface at the ledger level, not SQL-shaped** (e.g. `Commit(ctx, tx)` and `Balance(ctx, account)`), so callers never depend on a backend's SQL.
-- **One shared SQL implementation** on `database/sql`, plus a small per-database dialect (locking clause, upsert syntax, `RETURNING`/`OUTPUT`, retryable error codes) for every SQL backend. MongoDB is the only non-SQL backend and has its own implementation.
+- **One shared SQL implementation** in `internal/sqlstore` (importable by the backend modules, because Go's internal rule is path-based), plus a small `Dialect` per database: placeholders, decimal conversion in and out, duplicate-key handling, transaction options and migration errors. Queries are written with `?` and rebound per dialect. Balances are updated before entries are inserted, because InnoDB share-locks the accounts that new entries reference. MongoDB is the only non-SQL backend and has its own implementation.
 - **One Go module per backend** (`ledgo/postgres`, `ledgo/oracle`, `ledgo/mysql`, `ledgo/sqlserver`, `ledgo/mongodb`, ...), so users only download the driver they use. Wire-compatible databases share a module (see Backends).
-- **Shared conformance test suite** that every backend must pass: balanced postings, idempotency, concurrent transfers, FX conversions, and debits = credits per currency under concurrent load.
-- Build the retry loop for serialization failures in from day one.
+- **Shared conformance test suite** that every backend must pass: balanced postings, idempotency, concurrent transfers, FX conversions, and debits = credits per currency under concurrent load. Backends that join a caller's transaction also run `ledgotest.TxSuite`: commit and rollback with the caller, and an exact amount with 20 integer digits and 18 decimal places. Its `Begin` can make the session hostile (Oracle uses a `,` decimal separator).
 
 ## Money: `shopspring/decimal`
 
@@ -54,7 +53,7 @@ Chosen over `int64` minor units because `int64` can't hold real amounts at 18 de
 - **Never use floats**, anywhere: not in the API, not in conversions.
 - **Never call `Div` in money paths.** `decimal.DivisionPrecision` is a package-wide setting that anyone can change. For FX, multiply by the rate, then round straight away to the target currency's decimal places.
 - **Compare with `Equal`/`Cmp`, never `==`.** The struct holds a `*big.Int` pointer.
-- **Validate decimal places on input.** Reject amounts with more decimal places than their currency allows (e.g. `1.005 USD`). Decimal places come from currencies registered with `ledgo.RegisterCurrency` (e.g. crypto, up to 18 places; safe for concurrent use), then from `Rhymond/go-money`'s ISO 4217 table, matched on the exact uppercase code. **go-money is an implementation detail**: never expose it in the API or ask users to import it, and never write to its global table. `TestISOCurrencies` pins a few entries so a go-money upgrade can't silently change validation.
+- **Validate decimal places on input.** Reject amounts with more decimal places than their currency allows (e.g. `1.005 USD`). Decimal places come from currencies registered with `ledgo.RegisterCurrency` (e.g. crypto; safe for concurrent use; it panics outside 0 to `MaxDecimalPlaces` = 18, because Oracle and MySQL round extra places silently), then from `Rhymond/go-money`'s ISO 4217 table, matched on the exact uppercase code. **go-money is an implementation detail**: never expose it in the API or ask users to import it, and never write to its global table. `TestISOCurrencies` pins a few entries so a go-money upgrade can't silently change validation.
 - **`shopspring/decimal` is part of the public API.** Changing it later is a breaking change.
 
 ## Accounting rules (non-negotiable)

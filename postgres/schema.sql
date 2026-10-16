@@ -1,3 +1,5 @@
+-- Migrate splits this file on semicolons, so keep them out of comments.
+
 CREATE TABLE IF NOT EXISTS ledgo_accounts (
     id                             TEXT PRIMARY KEY,
     currency                       TEXT        NOT NULL,
