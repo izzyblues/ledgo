@@ -11,3 +11,15 @@ services:
       test: ["CMD", "pg_isready", "-U", "ledgo"]
       interval: 1s
       retries: 30
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    environment:
+      ORACLE_PASSWORD: ledgo
+      APP_USER: ledgo
+      APP_USER_PASSWORD: ledgo
+    ports:
+      - "1521:1521"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 2s
+      retries: 90
