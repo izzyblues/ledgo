@@ -3,8 +3,8 @@
 Double-entry ledger library for Go, with multi-currency and FX support, append-only storage and pluggable storage backends.
 
 - Module: `github.com/izzyblues/ledgo` (public on GitHub). Licence: Apache-2.0.
-- Status: v0.0.1 (core types, `TransactionBuilder`, validation, conformance suite `ledgotest`, and the PostgreSQL and Oracle backends).
-- Releases: tag the core module `vX.Y.Z` first, then each backend (`postgres/vX.Y.Z`, `oracle/vX.Y.Z`, `mysql/vX.Y.Z`). Each backend's `go.mod` requires the matching core version. Backends import `internal/sqlstore` from core, so a change there needs a core release before the backends: `go mod tidy` and `GOWORK=off` builds of a backend fail until core is tagged, then bump the backend's `require` and tidy. Local development uses the root `go.work` (add each new backend module to it); consumers ignore it.
+- Status: v0.0.2 (core types, `TransactionBuilder`, validation, conformance suites `ledgotest`, the shared `internal/sqlstore`, and the PostgreSQL, Oracle and MySQL backends). Released: `v0.0.2`, `postgres/v0.0.2`, `oracle/v0.0.2`, `mysql/v0.0.1`.
+- Releases: tag the core module `vX.Y.Z` first, then each backend (`postgres/vX.Y.Z`, `oracle/vX.Y.Z`, `mysql/vX.Y.Z`). Each backend's `go.mod` requires a core version that is the same as its own or newer (e.g. `mysql/v0.0.1` requires core `v0.0.2`). Backends import `internal/sqlstore` from core, so a change there needs a core release before the backends: `go mod tidy` and `GOWORK=off` builds of a backend fail until core is tagged, then bump the backend's `require` and tidy. Local development uses the root `go.work` (add each new backend module to it); consumers ignore it.
 - Tests: testify. Postgres, Oracle and MySQL run in Docker: `docker compose up -d`, then `go test ./...` in the backend's directory.
 - One entity per file, each with its own sentinel errors.
 - `make` lints and tests every module (`make lint`, `make test`, `make fmt`, `make db-up`). golangci-lint v2, config in `.golangci.yml`. Add each new backend module to `MODULES` in the Makefile, to `go.work`, and to the matrix in `.github/workflows/ci.yml` (with its database as a service).

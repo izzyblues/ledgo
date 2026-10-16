@@ -4,12 +4,10 @@ MySQL store for [ledgo](../README.md), on `database/sql` with the [go-sql-driver
 
 Tested on MySQL 8.4 with InnoDB tables. It needs MySQL 8.0 or later, for the `utf8mb4_0900_bin` collation.
 
-> **Not released yet.** It will ship with the next ledgo release.
-
 ## Installation
 
 ```sh
-go get github.com/izzyblues/ledgo/mysql
+go get github.com/izzyblues/ledgo/mysql@v0.0.1
 ```
 
 ## Usage

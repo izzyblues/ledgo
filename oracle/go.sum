@@ -1,7 +1,7 @@
 github.com/Rhymond/go-money v1.0.15 h1:rdcIcO8FxCqEwBSt5VZf4hLMfovtcDIiY5/cQWE+7Vo=
 github.com/Rhymond/go-money v1.0.15/go.mod h1:iHvCuIvitxu2JIlAlhF0g9jHqjRSr+rpdOs7Omqlupg=
-github.com/izzyblues/ledgo v0.0.1 h1:oAfbD+ro+WgUgb4IbbpVwyy+QL6q8lE0sIfSJ4B3zpw=
-github.com/izzyblues/ledgo v0.0.1/go.mod h1:YNEkjUMp1zR944Ph94U9eVV8TDBou0PeTdoLU3KSmEc=
+github.com/izzyblues/ledgo v0.0.2 h1:1n2/BD+UmZyqJyraBm33LQnBdwqw2CcS+S16I2+HuVc=
+github.com/izzyblues/ledgo v0.0.2/go.mod h1:YNEkjUMp1zR944Ph94U9eVV8TDBou0PeTdoLU3KSmEc=
 github.com/shopspring/decimal v1.5.0 h1:HxSWk31RmJv0EyY4oLiGQB9u7WPludUwPBdvQZnYFPc=
 github.com/shopspring/decimal v1.5.0/go.mod h1:gawqmDU56v4yIKSwfBSFip1HdCCXN8/+DMd9qYNcwME=
 github.com/sijms/go-ora/v2 v2.9.0 h1:+iQbUeTeCOFMb5BsOMgUhV8KWyrv9yjKpcK4x7+MFrg=
