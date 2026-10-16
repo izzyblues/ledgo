@@ -2,7 +2,7 @@
 
 Double-entry ledger library for Go, with multi-currency and FX support, append-only storage and pluggable storage backends.
 
-> **Status:** v0.0.1, the first release. The core API and the PostgreSQL backend work and pass the conformance suite. Until v1.0.0 the API may still change between minor versions.
+> **Status:** v0.0.1, the first release. The core API and the PostgreSQL and Oracle backends work and pass the conformance suite. Until v1.0.0 the API may still change between minor versions.
 
 ## Installation
 
@@ -11,9 +11,10 @@ ledgo is split into modules, so you only download the driver you use:
 ```sh
 go get github.com/izzyblues/ledgo@v0.0.1          # core: accounts, transactions, validation
 go get github.com/izzyblues/ledgo/postgres@v0.0.1 # PostgreSQL store
+go get github.com/izzyblues/ledgo/oracle@v0.0.1   # Oracle Database store
 ```
 
-Create the tables with `postgres.New(db).Migrate(ctx)`, or copy [`postgres/schema.sql`](postgres/schema.sql) into your own migrations.
+Create the tables with your store's `Migrate`, for example `postgres.New(db).Migrate(ctx)`, or copy its `schema.sql` into your own migrations. Each store has its own README: [PostgreSQL](postgres/README.md), [Oracle](oracle/README.md).
 
 ## Why ledgo
 
@@ -23,7 +24,7 @@ Dedicated ledger services such as [TigerBeetle](https://tigerbeetle.com), [Forma
 
 ledgo is a good fit when:
 
-- your service already owns a transactional database (PostgreSQL today), and you want its money movements in proper double-entry form;
+- your service already owns a transactional database (PostgreSQL or Oracle today), and you want its money movements in proper double-entry form;
 - you need postings to be atomic with your business state;
 - you want SQL access to your ledger for reporting and reconciliation, without running new infrastructure.
 
@@ -60,28 +61,28 @@ err := ledger.Commit(ctx, tx) // same transaction as your business update
 - **Let your entities carry their transactions**, like outbox message records: a domain method that moves money records a transaction, and the repository commits it with `postgres.InTx` in the same database transaction as the entity.
 - **Derive idempotency keys from the business event** (for example `order:{id}:refunded`), so retries and message redeliveries are no-ops.
 
-## Planned backends
+## Backends
 
-| Backend | Guarantees |
-|---|---|
-| PostgreSQL (also Aurora, AlloyDB, Neon, Supabase) | Full ACID |
-| Oracle | Full ACID |
-| MySQL (InnoDB) | Full ACID |
-| SQL Server | Full ACID |
-| MongoDB | ACID multi-document transactions, replica set required |
-| IBM Db2 | Full ACID, amounts up to 13 integer digits at 18 decimal places |
-| SQLite | Full ACID, single writer |
-| MariaDB | Full ACID |
-| Cloud Spanner | Full ACID, amounts up to 9 decimal places |
-| CockroachDB | Full ACID |
-| TiDB | Full ACID |
-| YugabyteDB | Full ACID |
+| Backend | Status | Guarantees |
+|---|---|---|
+| PostgreSQL (also Aurora, AlloyDB, Neon, Supabase) | Available | Full ACID |
+| Oracle | Available | Full ACID |
+| MySQL (InnoDB) | Planned | Full ACID |
+| SQL Server | Planned | Full ACID |
+| MongoDB | Planned | ACID multi-document transactions, replica set required |
+| IBM Db2 | Planned | Full ACID, amounts up to 13 integer digits at 18 decimal places |
+| SQLite | Planned | Full ACID, single writer |
+| MariaDB | Planned | Full ACID |
+| Cloud Spanner | Planned | Full ACID, amounts up to 9 decimal places |
+| CockroachDB | Planned | Full ACID |
+| TiDB | Planned | Full ACID |
+| YugabyteDB | Planned | Full ACID |
 
 ledgo supports transactional databases only, because committing inside your own transaction needs one.
 
 ## Versioning
 
-ledgo follows [semantic versioning](https://semver.org). Each module is tagged separately: `vX.Y.Z` for the core module and `postgres/vX.Y.Z` for the PostgreSQL store. A store release always requires a core release with the same version or newer.
+ledgo follows [semantic versioning](https://semver.org). Each module is tagged separately: `vX.Y.Z` for the core module and `postgres/vX.Y.Z`, `oracle/vX.Y.Z` and so on for each store. A store release always requires a core release with the same version or newer.
 
 ## License
 

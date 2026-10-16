@@ -4,12 +4,10 @@ Oracle Database store for [ledgo](../README.md), on `database/sql` with the pure
 
 Tested on Oracle Database 23ai. The schema avoids 23ai-only features, so 19c should work too.
 
-> **Not released yet.** It will ship with the next ledgo release.
-
 ## Installation
 
 ```sh
-go get github.com/izzyblues/ledgo/oracle
+go get github.com/izzyblues/ledgo/oracle@v0.0.1
 ```
 
 ## Usage

@@ -3,9 +3,9 @@
 Double-entry ledger library for Go, with multi-currency and FX support, append-only storage and pluggable storage backends.
 
 - Module: `github.com/izzyblues/ledgo` (public on GitHub). Licence: Apache-2.0.
-- Status: v0.0.1 (core types, `TransactionBuilder`, validation, conformance suite `ledgotest` and the PostgreSQL backend).
+- Status: v0.0.1 (core types, `TransactionBuilder`, validation, conformance suite `ledgotest`, and the PostgreSQL and Oracle backends).
 - Releases: tag the core module `vX.Y.Z` first, then each backend (`postgres/vX.Y.Z`, `oracle/vX.Y.Z`). Each backend's `go.mod` requires the matching core version. Local development uses the root `go.work` (add each new backend module to it); consumers ignore it.
-- Tests: testify. Postgres runs in Docker: `docker compose up -d`, then `go test ./...` in `postgres/`.
+- Tests: testify. Postgres and Oracle run in Docker: `docker compose up -d`, then `go test ./...` in the backend's directory.
 - One entity per file, each with its own sentinel errors.
 - `make` lints and tests every module (`make lint`, `make test`, `make fmt`, `make db-up`). golangci-lint v2, config in `.golangci.yml`. Add each new backend module to `MODULES` in the Makefile, to `go.work`, and to the matrix in `.github/workflows/ci.yml` (with its database as a service).
 
