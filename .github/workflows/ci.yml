@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push to a PR cancels its previous run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  module:
+    name: ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # One job per module, as in MODULES in the Makefile. Each job starts
+        # only its own database: a service with an empty image doesn't start.
+        include:
+          - module: .
+          - module: postgres
+            postgres: postgres:17-alpine
+          - module: oracle
+            oracle: gvenzl/oracle-free:23-slim-faststart
+
+    services:
+      postgres:
+        image: ${{ matrix.postgres }}
+        env:
+          POSTGRES_USER: ledgo
+          POSTGRES_PASSWORD: ledgo
+          POSTGRES_DB: ledgo
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U ledgo" --health-interval 1s --health-retries 30
+      oracle:
+        image: ${{ matrix.oracle }}
+        env:
+          ORACLE_PASSWORD: ledgo
+          APP_USER: ledgo
+          APP_USER_PASSWORD: ledgo
+        ports: ["1521:1521"]
+        options: --health-cmd healthcheck.sh --health-interval 2s --health-retries 90
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.module }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.work
+          cache-dependency-path: "**/go.sum"
+
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.14.0
+          working-directory: ${{ matrix.module }}
+
+      - run: go test -race -count=1 ./...
