@@ -2,19 +2,20 @@
 
 Double-entry ledger library for Go, with multi-currency and FX support, append-only storage and pluggable storage backends.
 
-> **Status:** v0.0.1, the first release. The core API and the PostgreSQL and Oracle backends work and pass the conformance suite. Until v1.0.0 the API may still change between minor versions.
+> **Status:** v0.0.2. The core API and the PostgreSQL, Oracle and MySQL backends work and pass the conformance suite. Until v1.0.0 the API may still change between minor versions.
 
 ## Installation
 
 ledgo is split into modules, so you only download the driver you use:
 
 ```sh
-go get github.com/izzyblues/ledgo@v0.0.1          # core: accounts, transactions, validation
-go get github.com/izzyblues/ledgo/postgres@v0.0.1 # PostgreSQL store
-go get github.com/izzyblues/ledgo/oracle@v0.0.1   # Oracle Database store
+go get github.com/izzyblues/ledgo@v0.0.2          # core: accounts, transactions, validation
+go get github.com/izzyblues/ledgo/postgres@v0.0.2 # PostgreSQL store
+go get github.com/izzyblues/ledgo/oracle@v0.0.2   # Oracle Database store
+go get github.com/izzyblues/ledgo/mysql@v0.0.1    # MySQL store
 ```
 
-Create the tables with your store's `Migrate`, for example `postgres.New(db).Migrate(ctx)`, or copy its `schema.sql` into your own migrations. Each store has its own README: [PostgreSQL](postgres/README.md), [Oracle](oracle/README.md).
+Create the tables with your store's `Migrate`, for example `postgres.New(db).Migrate(ctx)`, or copy its `schema.sql` into your own migrations. Each store has its own README: [PostgreSQL](postgres/README.md), [Oracle](oracle/README.md), [MySQL](mysql/README.md).
 
 ## Why ledgo
 
@@ -24,7 +25,7 @@ Dedicated ledger services such as [TigerBeetle](https://tigerbeetle.com), [Forma
 
 ledgo is a good fit when:
 
-- your service already owns a transactional database (PostgreSQL or Oracle today), and you want its money movements in proper double-entry form;
+- your service already owns a transactional database (PostgreSQL, Oracle or MySQL today), and you want its money movements in proper double-entry form;
 - you need postings to be atomic with your business state;
 - you want SQL access to your ledger for reporting and reconciliation, without running new infrastructure.
 
@@ -67,7 +68,7 @@ err := ledger.Commit(ctx, tx) // same transaction as your business update
 |---|---|---|
 | PostgreSQL (also Aurora, AlloyDB, Neon, Supabase) | Available | Full ACID |
 | Oracle | Available | Full ACID |
-| MySQL (InnoDB) | Planned | Full ACID |
+| MySQL (InnoDB) | Available | Full ACID |
 | SQL Server | Planned | Full ACID |
 | MongoDB | Planned | ACID multi-document transactions, replica set required |
 | IBM Db2 | Planned | Full ACID, amounts up to 13 integer digits at 18 decimal places |

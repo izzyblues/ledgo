@@ -7,7 +7,7 @@ Also works with PostgreSQL-compatible services such as Aurora, AlloyDB, Neon and
 ## Installation
 
 ```sh
-go get github.com/izzyblues/ledgo/postgres@v0.0.1
+go get github.com/izzyblues/ledgo/postgres@v0.0.2
 ```
 
 ## Usage

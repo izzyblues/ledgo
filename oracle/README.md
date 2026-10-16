@@ -7,7 +7,7 @@ Tested on Oracle Database 23ai. The schema avoids 23ai-only features, so 19c sho
 ## Installation
 
 ```sh
-go get github.com/izzyblues/ledgo/oracle@v0.0.1
+go get github.com/izzyblues/ledgo/oracle@v0.0.2
 ```
 
 ## Usage
