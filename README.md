@@ -23,7 +23,7 @@ Dedicated ledger services such as [TigerBeetle](https://tigerbeetle.com), [Forma
 
 ledgo is a good fit when:
 
-- your service already owns a SQL database (PostgreSQL today), and you want its money movements in proper double-entry form;
+- your service already owns a transactional database (PostgreSQL today), and you want its money movements in proper double-entry form;
 - you need postings to be atomic with your business state;
 - you want SQL access to your ledger for reporting and reconciliation, without running new infrastructure.
 
@@ -64,12 +64,20 @@ err := ledger.Commit(ctx, tx) // same transaction as your business update
 
 | Backend | Guarantees |
 |---|---|
-| PostgreSQL | Full ACID |
+| PostgreSQL (also Aurora, AlloyDB, Neon, Supabase) | Full ACID |
+| Oracle | Full ACID |
 | MySQL (InnoDB) | Full ACID |
+| SQL Server | Full ACID |
+| MongoDB | ACID multi-document transactions, replica set required |
+| IBM Db2 | Full ACID, amounts up to 13 integer digits at 18 decimal places |
 | SQLite | Full ACID, single writer |
+| MariaDB | Full ACID |
+| Cloud Spanner | Full ACID, amounts up to 9 decimal places |
 | CockroachDB | Full ACID |
+| TiDB | Full ACID |
+| YugabyteDB | Full ACID |
 
-ledgo supports SQL databases only, because committing inside your own transaction needs one.
+ledgo supports transactional databases only, because committing inside your own transaction needs one.
 
 ## Versioning
 
